@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neuro Quest — Misi Impuls Saraf</title>
+<style>
+  :root{
+    --bg-deep:#0b0c24;
+    --bg-panel:#171a3d;
+    --bg-panel-2:#1f2450;
+    --line:#343a72;
+    --text:#eef0ff;
+    --text-dim:#9aa0d4;
+    --pulse:#5ff2d1;
+    --pulse-soft:#5ff2d155;
+    --danger:#ff6b8b;
+    --gold:#ffcf6b;
+    --font-head: Georgia, 'Times New Roman', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 20%, #1c2260 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #241a4e 0%, transparent 50%),
+      var(--bg-deep);
+    color:var(--text);
+    font-family:var(--font-body);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px 14px;
+  }
+  .stage{
+    width:100%;
+    max-width:480px;
+  }
+
+  /* --- Synapse header line --- */
+  .synapse-rail{
+    position:relative;
+    height:46px;
+    margin-bottom:18px;
+    overflow:hidden;
+  }
+  .synapse-rail svg{width:100%;height:100%;display:block;}
+  .synapse-path{
+    fill:none;
+    stroke:var(--line);
+    stroke-width:2;
+  }
+  .synapse-dot{
+    fill:var(--pulse);
+    filter:drop-shadow(0 0 6px var(--pulse));
+  }
+
+  .card{
+    background:linear-gradient(180deg,var(--bg-panel) 0%, var(--bg-panel-2) 100%);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:22px 20px 24px;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+
+  .top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+    font-size:13px;
+    color:var(--text-dim);
+    letter-spacing:.02em;
+  }
+  .badge-level{
+    color:var(--pulse);
+    font-weight:600;
+  }
+  .lives{
+    display:flex;
+    gap:6px;
+    font-size:16px;
+  }
+  .life{opacity:1; transition:opacity .3s, transform .3s;}
+  .life.lost{opacity:.18; transform:scale(.8);}
+
+  .progress-track{
+    height:6px;
+    border-radius:3px;
+    background:var(--line);
+    overflow:hidden;
+    margin-bottom:20px;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--pulse), #7fa8ff);
+    width:0%;
+    transition:width .5s ease;
+  }
+
+  h1.title{
+    font-family:var(--font-head);
+    font-size:26px;
+    margin:0 0 2px;
+    letter-spacing:.01em;
+  }
+  .subtitle{
+    color:var(--text-dim);
+    font-size:13.5px;
+    margin:0 0 18px;
+    line-height:1.5;
+  }
+
+  .level-tag{
+    display:inline-block;
+    font-size:12px;
+    color:var(--bg-deep);
+    background:var(--pulse);
+    padding:3px 10px;
+    border-radius:20px;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+
+  .scenario{
+    font-size:15.5px;
+    line-height:1.65;
+    margin-bottom:16px;
+  }
+
+  .question{
+    font-size:15.5px;
+    font-weight:600;
+    margin-bottom:14px;
+    line-height:1.5;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .opt{
+    text-align:left;
+    background:#12142f;
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:13px 14px;
+    border-radius:12px;
+    font-size:14.5px;
+    line-height:1.45;
+    cursor:pointer;
+    transition:border-color .15s, background .15s, transform .1s;
+  }
+  .opt:hover:not(:disabled){
+    border-color:var(--pulse);
+    background:#171a3d;
+  }
+  .opt:active:not(:disabled){transform:scale(.99);}
+  .opt:disabled{cursor:default;}
+  .opt.correct{
+    border-color:var(--pulse);
+    background:#12352f;
+  }
+  .opt.wrong{
+    border-color:var(--danger);
+    background:#3a1a26;
+  }
+
+  .feedback{
+    margin-top:14px;
+    padding:14px;
+    border-radius:12px;
+    font-size:14px;
+    line-height:1.6;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.ok{
+    background:#0e2b26;
+    border:1px solid #235d51;
+  }
+  .feedback.bad{
+    background:#2b1420;
+    border:1px solid #6b2c40;
+  }
+  .feedback .fb-title{
+    font-weight:700;
+    margin-bottom:4px;
+    display:block;
+  }
+  .feedback.ok .fb-title{color:var(--pulse);}
+  .feedback.bad .fb-title{color:var(--danger);}
+
+  .next-btn{
+    margin-top:16px;
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:12px;
+    background:var(--pulse);
+    color:#062723;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    display:none;
+  }
+  .next-btn.show{display:block;}
+  .next-btn:active{transform:scale(.99);}
+
+  .score-line{
+    text-align:right;
+    font-size:13px;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  .score-line b{color:var(--gold);}
+
+  /* --- End screen --- */
+  .end-screen{display:none;text-align:center;}
+  .end-screen.show{display:block;}
+  .end-icon{font-size:44px;margin-bottom:6px;}
+  .end-title{font-family:var(--font-head);font-size:24px;margin:0 0 4px;}
+  .end-rank{
+    display:inline-block;
+    margin:10px 0 6px;
+    padding:6px 16px;
+    border-radius:20px;
+    background:var(--bg-panel-2);
+    border:1px solid var(--pulse);
+    color:var(--pulse);
+    font-weight:700;
+    font-size:14px;
+  }
+  .end-score{font-size:15px;color:var(--text-dim);margin-bottom:18px;}
+  .restart-btn{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:12px;
+    background:transparent;
+    border:1px solid var(--pulse);
+    color:var(--pulse);
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+  }
+
+  .start-screen{text-align:center;}
+  .start-screen .end-icon{font-size:48px;}
+  .start-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:var(--pulse);
+    color:#062723;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    margin-top:18px;
+  }
+  .rules{
+    text-align:left;
+    font-size:13.5px;
+    color:var(--text-dim);
+    line-height:1.7;
+    margin-top:14px;
+    padding-left:18px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="synapse-rail">
+    <svg viewBox="0 0 480 46" preserveAspectRatio="none">
+      <path class="synapse-path" d="M0,23 L120,23 L140,6 L160,40 L180,23 L480,23"/>
+      <circle class="synapse-dot" r="4" cx="0" cy="23">
+        <animateMotion dur="2.6s" repeatCount="indefinite"
+          path="M0,23 L120,23 L140,6 L160,40 L180,23 L480,23"/>
+      </circle>
+    </svg>
+  </div>
+
+  <div class="card">
+
+    <!-- START SCREEN -->
+    <div id="startScreen" class="start-screen">
+      <div class="end-icon">🧠</div>
+      <h1 class="title">Neuro Quest</h1>
+      <p class="subtitle">Misi Impuls Saraf — bantu impuls saraf mencapai bagian tubuh yang tepat.</p>
+      <ul class="rules">
+        <li>Jawab tiap soal untuk melanjutkan misi.</li>
+        <li>Benar = +10 poin. Salah = kehilangan 1 nyawa.</li>
+        <li>Kamu punya 3 nyawa. Habis nyawa, misi berakhir.</li>
+        <li>Selesaikan 5 level untuk jadi Master Sistem Saraf.</li>
+      </ul>
+      <button class="start-btn" onclick="startGame()">Mulai Misi</button>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="gameScreen" style="display:none;">
+      <div class="top-row">
+        <span class="badge-level" id="levelBadge">Level 1</span>
+        <div class="lives" id="livesBox"></div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+      <span class="level-tag" id="levelTag">KENALI NEURON</span>
+      <div class="scenario" id="scenarioText"></div>
+      <div class="question" id="questionText"></div>
+      <div class="options" id="optionsBox"></div>
+
+      <div class="feedback" id="feedbackBox">
+        <span class="fb-title" id="fbTitle"></span>
+        <span id="fbText"></span>
+      </div>
+
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Lanjutkan →</button>
+      <div class="score-line">Skor: <b id="scoreText">0</b></div>
+    </div>
+
+    <!-- END SCREEN -->
+    <div id="endScreen" class="end-screen">
+      <div class="end-icon" id="endIcon">🏆</div>
+      <h2 class="end-title" id="endTitle">Misi Selesai!</h2>
+      <div class="end-rank" id="endRank">Pemula</div>
+      <div class="end-score" id="endScoreText">Skor akhir: 0</div>
+      <button class="restart-btn" onclick="restartGame()">Main Lagi</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const questions = [
+  // LEVEL 1 — Kenali Neuron
+  {level:1, tag:"KENALI NEURON",
+   scenario:"Sebuah sinyal listrik perlu berjalan dari ujung penerima menuju ujung pengirim di dalam satu sel saraf.",
+   question:"Bagian neuron mana yang berfungsi menerima rangsangan dari neuron lain?",
+   options:["Dendrit","Akson","Badan sel","Selubung mielin"],
+   correct:0,
+   explanation:"Dendrit adalah cabang pendek pada neuron yang bertugas menerima rangsangan dan meneruskannya ke badan sel."},
+  {level:1, tag:"KENALI NEURON",
+   scenario:"Impuls yang sudah diproses badan sel harus dikirim menuju neuron atau sel otot lain.",
+   question:"Bagian neuron yang menghantarkan impuls keluar dari badan sel adalah...",
+   options:["Dendrit","Nukleus","Akson","Nodus Ranvier"],
+   correct:2,
+   explanation:"Akson adalah serabut panjang yang menghantarkan impuls dari badan sel menuju ujung neuron berikutnya."},
+  {level:1, tag:"KENALI NEURON",
+   scenario:"Di ujung akson, impuls harus 'melompat' ke neuron berikutnya.",
+   question:"Celah sempit tempat impuls berpindah dari satu neuron ke neuron lain disebut...",
+   options:["Sinaps","Dendrit","Badan sel","Nukleus"],
+   correct:0,
+   explanation:"Sinaps adalah celah pertemuan antar neuron, tempat impuls diteruskan lewat zat kimia bernama neurotransmiter."},
+
+  // LEVEL 2 — Kirim Impuls
+  {level:2, tag:"KIRIM IMPULS ⚡",
+   scenario:"Kamu menyentuh panci panas. Tanganmu harus segera menjauh!",
+   question:"Apa urutan perjalanan impuls yang benar untuk gerak refleks ini?",
+   options:[
+     "Reseptor → neuron sensorik → pusat saraf → neuron motorik → otot",
+     "Otot → neuron motorik → otak → reseptor",
+     "Otak → reseptor → neuron motorik → otot",
+     "Reseptor → otot → neuron sensorik → otak"],
+   correct:0,
+   explanation:"Panas diterima reseptor, dibawa neuron sensorik ke pusat saraf, lalu perintah balik lewat neuron motorik ke otot sehingga tangan menjauh."},
+  {level:2, tag:"KIRIM IMPULS ⚡",
+   scenario:"Pada gerak refleks, jalur impuls sengaja dibuat sesingkat mungkin.",
+   question:"Jalur pendek yang dilewati impuls pada gerak refleks (tanpa melalui otak) disebut...",
+   options:["Sinaps","Lengkung refleks","Neuron konektor","Sistem saraf otonom"],
+   correct:1,
+   explanation:"Lengkung refleks (arkus refleks) adalah jalur singkat impuls dari reseptor ke sumsum tulang belakang lalu langsung ke efektor, tanpa melalui otak."},
+  {level:2, tag:"KIRIM IMPULS ⚡",
+   scenario:"Neuron yang menghubungkan neuron sensorik dan neuron motorik di sumsum tulang belakang punya peran khusus.",
+   question:"Neuron yang menghubungkan neuron sensorik dengan neuron motorik disebut...",
+   options:["Neuron aferen","Neuron eferen","Neuron konektor (asosiasi)","Neuron reseptor"],
+   correct:2,
+   explanation:"Neuron konektor (asosiasi) berada di pusat saraf, menghubungkan neuron sensorik dan neuron motorik."},
+
+  // LEVEL 3 — Refleks Cepat
+  {level:3, tag:"REFLEKS CEPAT 🔥",
+   scenario:"Kamu berkedip otomatis saat ada debu mendekati mata, tanpa sempat berpikir.",
+   question:"Gerakan ini termasuk jenis gerak...",
+   options:["Gerak sadar","Gerak refleks","Gerak otonom penuh","Gerak reflektif terlatih"],
+   correct:1,
+   explanation:"Berkedip karena debu adalah gerak refleks: cepat, tidak disengaja, dan tidak melibatkan proses berpikir di otak."},
+  {level:3, tag:"REFLEKS CEPAT 🔥",
+   scenario:"Kamu sengaja mengangkat tangan untuk menjawab pertanyaan guru.",
+   question:"Gerakan mengangkat tangan ini termasuk gerak...",
+   options:["Gerak refleks","Gerak sadar","Gerak spontan sumsum tulang belakang","Gerak reflektoris"],
+   correct:1,
+   explanation:"Gerak sadar melibatkan otak sebagai pusat pengambilan keputusan sebelum perintah dikirim ke otot."},
+  {level:3, tag:"REFLEKS CEPAT 🔥",
+   scenario:"Dokter mengetuk lutut pasien dengan palu refleks, dan kaki pasien menendang otomatis.",
+   question:"Mengapa gerak ini disebut refleks?",
+   options:[
+     "Karena melalui proses berpikir yang lama di otak",
+     "Karena impuls langsung diproses di sumsum tulang belakang tanpa ke otak",
+     "Karena pasien sengaja menendang",
+     "Karena hanya terjadi pada orang sakit"],
+   correct:1,
+   explanation:"Refleks lutut adalah refleks spinal: impuls diproses langsung di sumsum tulang belakang sehingga responsnya sangat cepat."},
+
+  // LEVEL 4 — Pusat Komando
+  {level:4, tag:"PUSAT KOMANDO 🧠",
+   scenario:"Seseorang mengalami cedera di bagian otak yang mengatur keseimbangan tubuh sehingga jalannya sempoyongan.",
+   question:"Bagian otak manakah yang kemungkinan besar terganggu?",
+   options:["Otak besar (serebrum)","Otak kecil (serebelum)","Sumsum lanjutan (medula oblongata)","Talamus"],
+   correct:1,
+   explanation:"Otak kecil (serebelum) berperan mengatur keseimbangan tubuh dan koordinasi gerak."},
+  {level:4, tag:"PUSAT KOMANDO 🧠",
+   scenario:"Kamu sedang mengingat pelajaran, berbicara, dan memecahkan soal matematika.",
+   question:"Aktivitas berpikir dan mengingat ini terutama dikendalikan oleh...",
+   options:["Otak kecil","Sumsum tulang belakang","Otak besar (serebrum)","Saraf tepi"],
+   correct:2,
+   explanation:"Otak besar (serebrum) adalah pusat berpikir, mengingat, berbicara, dan mengambil keputusan sadar."},
+  {level:4, tag:"PUSAT KOMANDO 🧠",
+   scenario:"Detak jantung dan napasmu tetap berjalan otomatis meski kamu tertidur.",
+   question:"Bagian otak yang mengatur fungsi otomatis seperti detak jantung dan pernapasan adalah...",
+   options:["Serebrum","Serebelum","Medula oblongata","Hipotalamus"],
+   correct:2,
+   explanation:"Medula oblongata (sumsum lanjutan) mengatur fungsi vital otomatis seperti detak jantung, pernapasan, dan tekanan darah."},
+
+  // LEVEL 5 — Dokter Saraf
+  {level:5, tag:"DOKTER SARAF 👨‍⚕️",
+   scenario:"Seorang pasien mengeluh separuh tubuhnya lemah setelah mengalami gangguan aliran darah ke otak.",
+   question:"Kondisi ini paling mungkin berkaitan dengan gangguan pada...",
+   options:["Saraf tepi di kaki","Otak besar (serebrum)","Sumsum tulang belakang bagian bawah","Otot rangka langsung"],
+   correct:1,
+   explanation:"Gangguan aliran darah ke otak besar (mirip kasus stroke) dapat melumpuhkan sebagian tubuh karena kendali gerak sadar terganggu."},
+  {level:5, tag:"DOKTER SARAF 👨‍⚕️",
+   scenario:"Pasien lain mengalami cedera tulang belakang dan kehilangan sensasi serta gerak pada kedua kakinya.",
+   question:"Bagian sistem saraf pusat yang paling mungkin cedera adalah...",
+   options:["Otak besar","Otak kecil","Sumsum tulang belakang","Saraf kranial"],
+   correct:2,
+   explanation:"Sumsum tulang belakang menjadi jalur utama impuls antara otak dan tubuh bagian bawah; cedera di sini dapat memutus sensasi dan gerak pada kaki."},
+  {level:5, tag:"DOKTER SARAF 👨‍⚕️",
+   scenario:"Pasien lansia mulai kesulitan mengingat kejadian baru, meski ingatan lama masih baik.",
+   question:"Gejala ini paling berkaitan dengan penurunan fungsi bagian...",
+   options:["Otak besar (serebrum)","Sumsum tulang belakang","Saraf tepi","Otot rangka"],
+   correct:0,
+   explanation:"Fungsi mengingat dan memori terutama diproses di otak besar (serebrum), sehingga penurunan fungsinya bisa memengaruhi daya ingat."}
+];
+
+let current = 0;
+let score = 0;
+let lives = 3;
+let answered = false;
+
+function startGame(){
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('gameScreen').style.display='block';
+  current = 0; score = 0; lives = 3;
+  renderLives();
+  loadQuestion();
+}
+
+function renderLives(){
+  const box = document.getElementById('livesBox');
+  box.innerHTML='';
+  for(let i=0;i<3;i++){
+    const span = document.createElement('span');
+    span.className = 'life' + (i>=lives ? ' lost':'');
+    span.textContent = '💙';
+    box.appendChild(span);
+  }
+}
+
+function loadQuestion(){
+  answered = false;
+  const q = questions[current];
+  document.getElementById('levelBadge').textContent = 'Level ' + q.level;
+  document.getElementById('levelTag').textContent = q.tag;
+  document.getElementById('scenarioText').textContent = q.scenario;
+  document.getElementById('questionText').textContent = q.question;
+  document.getElementById('scoreText').textContent = score;
+
+  const pct = Math.round((current/questions.length)*100);
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  const optionsBox = document.getElementById('optionsBox');
+  optionsBox.innerHTML='';
+  q.options.forEach((opt, idx)=>{
+    const btn = document.createElement('button');
+    btn.className='opt';
+    btn.textContent = String.fromCharCode(65+idx) + '. ' + opt;
+    btn.onclick = ()=> selectAnswer(idx);
+    optionsBox.appendChild(btn);
+  });
+
+  document.getElementById('feedbackBox').className='feedback';
+  document.getElementById('nextBtn').className='next-btn';
+}
+
+function selectAnswer(idx){
+  if(answered) return;
+  answered = true;
+  const q = questions[current];
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach(o=>o.disabled=true);
+
+  const feedbackBox = document.getElementById('feedbackBox');
+  const fbTitle = document.getElementById('fbTitle');
+  const fbText = document.getElementById('fbText');
+
+  if(idx === q.correct){
+    opts[idx].classList.add('correct');
+    score += 10;
+    feedbackBox.className='feedback ok show';
+    fbTitle.textContent='🎉 BENAR!';
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[q.correct].classList.add('correct');
+    lives -= 1;
+    feedbackBox.className='feedback bad show';
+    fbTitle.textContent='❌ BELUM TEPAT';
+    renderLives();
+  }
+  fbText.textContent = q.explanation;
+  document.getElementById('scoreText').textContent = score;
+  document.getElementById('nextBtn').className='next-btn show';
+
+  if(lives<=0){
+    document.getElementById('nextBtn').textContent = 'Lihat Hasil →';
+  } else {
+    document.getElementById('nextBtn').textContent = 'Lanjutkan →';
+  }
+}
+
+function nextQuestion(){
+  if(lives<=0){
+    endGame();
+    return;
+  }
+  current += 1;
+  if(current >= questions.length){
+    endGame();
+    return;
+  }
+  loadQuestion();
+}
+
+function endGame(){
+  document.getElementById('gameScreen').style.display='none';
+  document.getElementById('endScreen').className='end-screen show';
+  document.getElementById('progressFill').style.width='100%';
+
+  let rank, icon, title;
+  if(lives<=0){
+    icon='💫'; title='Misi Terhenti';
+    rank='Coba Lagi';
+  } else if(score>=100){
+    icon='🧠'; title='Misi Selesai!';
+    rank='Master Sistem Saraf';
+  } else if(score>=80){
+    icon='🏆'; title='Misi Selesai!';
+    rank='⭐⭐⭐ Ahli Neuron';
+  } else if(score>=40){
+    icon='🎓'; title='Misi Selesai!';
+    rank='⭐⭐ Penjelajah Saraf';
+  } else {
+    icon='🌱'; title='Misi Selesai!';
+    rank='⭐ Pemula';
+  }
+  document.getElementById('endIcon').textContent = icon;
+  document.getElementById('endTitle').textContent = title;
+  document.getElementById('endRank').textContent = rank;
+  document.getElementById('endScoreText').textContent = 'Skor akhir: ' + score + ' dari ' + (questions.length*10);
+}
+
+function restartGame(){
+  document.getElementById('endScreen').className='end-screen';
+  startGame();
+}
+</script>
+
+</body>
+</html>

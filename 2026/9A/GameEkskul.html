@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission: Teks Prosedur</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;color:#222}
+.game{max-width:760px;margin:auto;padding:18px}
+.card{background:white;border-radius:22px;padding:24px;box-shadow:0 10px 30px #0003;margin-top:15px}
+h1,h2{text-align:center;margin-top:0}
+.subtitle{text-align:center;color:#666}
+button{border:0;border-radius:14px;padding:13px 18px;font-size:16px;font-weight:bold;cursor:pointer;margin:6px;background:#667eea;color:white}
+button:hover{transform:translateY(-1px)}
+.option{display:block;width:100%;text-align:left;background:#f1f3ff;color:#222}
+.option.correct{background:#b9f6ca}
+.option.wrong{background:#ffcdd2}
+.top{display:flex;justify-content:space-between;font-weight:bold}
+.progress{height:10px;background:#eee;border-radius:20px;overflow:hidden;margin:14px 0}
+.bar{height:100%;background:#667eea;width:0}
+.hidden{display:none}
+.big{font-size:48px;text-align:center}
+.drag-list{display:flex;flex-direction:column;gap:10px}
+.drag-item{padding:15px;background:#f1f3ff;border-radius:12px;cursor:pointer;font-weight:bold}
+.drag-item.selected{outline:3px solid #667eea}
+.feedback{text-align:center;font-weight:bold;min-height:28px}
+.badge{text-align:center;font-size:22px}
+.small{font-size:14px;color:#666}
+</style>
+</head>
+<body>
+<div class="game">
+<div id="home" class="card">
+<div class="big">🎮</div>
+<h1>MISSION: TEKS PROSEDUR</h1>
+<p class="subtitle">Belajar teks prosedur sambil menyelesaikan misi!</p>
+<div style="text-align:center">
+<button onclick="startGame()">▶ Mulai Game</button>
+</div>
+<hr>
+<h3>📚 Yang akan dipelajari</h3>
+<p>🎯 Tujuan &nbsp; 🧰 Alat/Bahan &nbsp; 🔢 Urutan langkah &nbsp; ✨ Kata penghubung</p>
+</div>
+
+<div id="game" class="card hidden">
+<div class="top"><span id="level">Level 1</span><span>⭐ <span id="score">0</span></span></div>
+<div class="progress"><div id="bar" class="bar"></div></div>
+<div id="content"></div>
+<div id="feedback" class="feedback"></div>
+<div style="text-align:center"><button id="next" class="hidden" onclick="nextLevel()">Lanjut ➜</button></div>
+</div>
+
+<div id="finish" class="card hidden">
+<div class="big">🏆</div>
+<h1>MISSION COMPLETE!</h1>
+<p id="finalText" class="badge"></p>
+<p class="subtitle">Kamu sudah menyelesaikan misi Teks Prosedur.</p>
+<div style="text-align:center"><button onclick="startGame()">🔄 Main Lagi</button></div>
+</div>
+</div>
+
+<script>
+let level=1, score=0, selected=[], solved=false;
+const levels=[
+{title:"LEVEL 1 — Kenali Tujuan",html:`<h2>🎯 Apa tujuan teks berikut?</h2><p>“Cara Membuat Jus Mangga”</p>
+<button class="option" onclick="answer(this,false)">A. Cara menanam mangga</button>
+<button class="option" onclick="answer(this,true)">B. Cara membuat jus mangga</button>
+<button class="option" onclick="answer(this,false)">C. Cara membeli mangga</button>`},
+{title:"LEVEL 2 — Susun Langkah",html:`<h2>🧩 Susun langkah yang benar</h2><p class="small">Klik kartu sesuai urutan dari pertama sampai terakhir.</p>
+<div class="drag-list" id="steps">
+<div class="drag-item" onclick="pick(this,'A')">A. Masukkan mi ke air</div>
+<div class="drag-item" onclick="pick(this,'B')">B. Siapkan mi dan air</div>
+<div class="drag-item" onclick="pick(this,'C')">C. Rebus air hingga mendidih</div>
+<div class="drag-item" onclick="pick(this,'D')">D. Masukkan bumbu dan sajikan</div>
+</div>
+<button onclick="checkOrder()">✅ Periksa Urutan</button>`},
+{title:"LEVEL 3 — Cari Kesalahan",html:`<h2>🔍 Temukan kesalahan</h2><p>“Masukkan gula → tuangkan air → siapkan gelas → aduk.”</p>
+<p>Bagian mana yang seharusnya dilakukan paling awal?</p>
+<button class="option" onclick="answer(this,true)">A. Siapkan gelas</button>
+<button class="option" onclick="answer(this,false)">B. Masukkan gula</button>
+<button class="option" onclick="answer(this,false)">C. Aduk</button>`},
+{title:"LEVEL 4 — Kata Penghubung",html:`<h2>✨ Pilih kata yang tepat</h2><p>“____, siapkan alat dan bahan. Kemudian, mulai langkah pertama.”</p>
+<button class="option" onclick="answer(this,true)">A. Pertama</button>
+<button class="option" onclick="answer(this,false)">B. Terakhir</button>
+<button class="option" onclick="answer(this,false)">C. Tetapi</button>`},
+{title:"LEVEL 5 — BOSS MASTER PROSEDUR",html:`<h2>👾 BOSS CHALLENGE</h2><p>Lengkapi struktur teks prosedur:</p>
+<p>🎯 <b>Tujuan</b> → 🧰 <b>Alat/Bahan</b> → 🔢 <b>Langkah-langkah</b> → ?</p>
+<button class="option" onclick="answer(this,true)">A. Hasil/Penutup</button>
+<button class="option" onclick="answer(this,false)">B. Tokoh</button>
+<button class="option" onclick="answer(this,false)">C. Konflik</button>`}
+];
+
+function startGame(){level=1;score=0;document.getElementById('home').classList.add('hidden');document.getElementById('finish').classList.add('hidden');document.getElementById('game').classList.remove('hidden');showLevel();}
+function showLevel(){
+solved=false;selected=[];document.getElementById('level').textContent=levels[level-1].title;document.getElementById('score').textContent=score;document.getElementById('bar').style.width=((level-1)/5*100)+'%';document.getElementById('content').innerHTML=levels[level-1].html;document.getElementById('feedback').textContent='';document.getElementById('next').classList.add('hidden');
+}
+function answer(btn,correct){
+if(solved)return;solved=true;
+document.querySelectorAll('.option').forEach(b=>b.disabled=true);
+if(correct){btn.classList.add('correct');score+=20;document.getElementById('feedback').textContent='🎉 Benar! +20 poin';}
+else{btn.classList.add('wrong');score=Math.max(0,score-5);document.getElementById('feedback').textContent='❌ Kurang tepat. -5 poin';}
+document.getElementById('score').textContent=score;document.getElementById('next').classList.remove('hidden');
+}
+function pick(el,id){
+if(solved)return;
+if(selected.includes(id))return;
+selected.push(id);el.classList.add('selected');el.textContent='✓ '+el.textContent;
+}
+function checkOrder(){
+if(solved)return;
+solved=true;
+let ok=selected.join('')==='BCAD';
+if(ok){score+=30;document.getElementById('feedback').textContent='🎉 Urutan benar! +30 poin';}
+else{score=Math.max(0,score-5);document.getElementById('feedback').textContent='❌ Urutan belum benar. Jawaban: B → C → A → D';}
+document.getElementById('score').textContent=score;document.getElementById('next').classList.remove('hidden');
+}
+function nextLevel(){
+if(level<5){level++;showLevel();}
+else{document.getElementById('game').classList.add('hidden');document.getElementById('finish').classList.remove('hidden');document.getElementById('finalText').textContent='Skor akhir: ⭐ '+score+' poin';}
+}
+</script>
+</body>
+</html>
