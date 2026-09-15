@@ -154,6 +154,1063 @@
     font-family: inherit;
   }
 
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #15803d; }
+  .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-outline:hover { background: #eff6ff; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 16px;
+  }
+
+  .preview-table th {
+    background: #f1f5f9;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+  }
+
+  .preview-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .preview-table tr:hover td { background: #f8fafc; }
+
+  .table-wrap {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .badge-green { background: #dcfce7; color: #166534; }
+
+  .stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .stat-item {
+    flex: 1;
+    min-width: 120px;
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+
+  .stat-item .num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--primary);
+  }
+
+  .stat-item .lbl {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .alert {
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .step {
+    text-align: center;
+    padding: 20px 16px;
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .step-num {
+    width: 36px; height: 36px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+
+  .step h3 { font-size: 0.95rem; margin-bottom: 4px; }
+  .step p { font-size: 0.8rem; color: var(--muted); }
+
+  .template-info {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+  }
+
+  .template-info code {
+    background: #fef3c7;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚙️ Generator Aplikasi Tryout</h1>
+  <p>Upload file XLSX → Klik Generate → Langsung jadi file HTML Tryout siap pakai</p>
+</div>
+
+<div class="container">
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Siapkan XLSX</h3>
+      <p>Bank soal format standar</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Isi Data & Upload</h3>
+      <p>Lengkapi form & upload file</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Generate & Download</h3>
+      <p>File HTML langsung jadi</p>
+    </div>
+  </div>
+
+  <div id="alertBox" class="alert"></div>
+
+  <!-- FORM DATA -->
+  <div class="card">
+    <div class="card-title"><div class="icon">🏫</div> Data Ujian</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Nama Sekolah</label>
+        <input type="text" id="schoolName" value="SMP IT Dar An-Najah Islamic Boarding School Takengon" placeholder="Nama sekolah lengkap">
+      </div>
+      <div class="form-group">
+        <label>Lokasi Sekolah</label>
+        <input type="text" id="schoolLocation" value="Takengon, Aceh Tengah" placeholder="Kota, Kabupaten">
+      </div>
+      <div class="form-group">
+        <label>Logo Sekolah (URL Gambar)</label>
+        <input type="text" id="schoolLogo" value="https://i.ibb.co.com/rRsYpQWB/20260909-210129.png" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Mata Pelajaran</label>
+        <input type="text" id="subject" placeholder="Contoh: Informatika" required>
+      </div>
+      <div class="form-group">
+        <label>Kelas</label>
+        <input type="text" id="grade" placeholder="Contoh: VII / VIII / IX" required>
+      </div>
+      <div class="form-group">
+        <label>Judul Ujian</label>
+        <input type="text" id="examTitle" value="Tryout UTS 1" placeholder="Contoh: Tryout UTS 1">
+      </div>
+      <div class="form-group">
+        <label>Jenis Soal</label>
+        <select id="examType">
+          <option value="Pilihan Ganda">Pilihan Ganda</option>
+          <option value="Essay">Essay</option>
+          <option value="Campuran">Campuran</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Jumlah Soal yang Diambil</label>
+        <input type="number" id="numQuestions" value="20" min="1" max="200">
+      </div>
+      <div class="form-group">
+        <label>Durasi (Menit)</label>
+        <input type="number" id="duration" value="25" min="1" max="300">
+      </div>
+      <div class="form-group">
+        <label>Poin per Soal</label>
+        <input type="number" id="pointsPerQ" value="5" min="1">
+      </div>
+      <div class="form-group">
+        <label>Nilai Maksimal</label>
+        <input type="number" id="maxScore" value="100" min="1">
+      </div>
+      <div class="form-group full">
+        <label>Deskripsi / Petunjuk</label>
+        <textarea id="description" placeholder="Petunjuk pengerjaan...">Latihan soal pilihan ganda acak untuk membantu siswa mengukur pemahaman materi sebelum ujian sesungguhnya.</textarea>
+      </div>
+      <div class="form-group full">
+        <label>Petunjuk Tambahan (tampil di form mulai)</label>
+        <textarea id="instructions" placeholder="Petunjuk detail...">Setiap sesi berisi soal pilihan ganda yang diacak dari bank soal. Kerjakan soal yang dianggap mudah terlebih dahulu, jawaban dapat diubah sebelum ujian diakhiri, dan waktu akan berjalan otomatis sejak sesi dimulai.</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD XLSX -->
+  <div class="card">
+    <div class="card-title"><div class="icon">📄</div> Upload Bank Soal (XLSX)</div>
+
+    <div class="upload-zone" id="uploadZone">
+      <div class="icon-upload">📁</div>
+      <p><strong>Klik di sini atau seret file XLSX</strong></p>
+      <p style="font-size:0.8rem; margin-top:4px;">Format: .xlsx, .xls</p>
+      <div id="fileName" class="filename hidden"></div>
+    </div>
+    <!-- Input file dipisah agar tidak bentrok event listener -->
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.XLSX,.XLS" style="display:none">
+
+    <div class="template-info">
+      <strong>📋 Format Kolom XLSX (Sheet pertama):</strong><br>
+      <code>No</code> · <code>Soal</code> · <code>A</code> · <code>B</code> · <code>C</code> · <code>D</code> · <code>Jawaban</code><br><br>
+      Kolom <strong>Jawaban</strong> isi dengan huruf: <code>A</code>, <code>B</code>, <code>C</code>, atau <code>D</code><br>
+      <em>Baris pertama = header, data mulai baris ke-2.</em>
+    </div>
+
+    <!-- Preview -->
+    <div id="previewSection" class="hidden">
+      <div class="stats" id="statsBox"></div>
+      <div class="table-wrap" style="margin-top:16px;">
+        <table class="preview-table" id="previewTable">
+          <thead><tr><th>No</th><th>Soal</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Jawaban</th></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- GENERATE -->
+  <div class="card" style="text-align:center;">
+    <div class="card-title" style="justify-content:center;"><div class="icon">🚀</div> Generate Aplikasi Tryout</div>
+    <p style="color:var(--muted); font-size:0.9rem; margin-bottom:20px;">
+      Pastikan semua data terisi dan file XLSX sudah diupload.
+    </p>
+    <button class="btn btn-success" id="btnGenerate" onclick="generateApp()" disabled style="font-size:1.1rem; padding:16px 40px;">
+      ⚡ Generate & Download HTML
+    </button>
+    <p style="font-size:0.75rem; color:var(--muted); margin-top:12px;">
+      File HTML mandiri (standalone) — bisa langsung dibuka di browser tanpa server.
+    </p>
+  </div>
+
+</div>
+
+<div class="footer">
+  Generator Tryout &copy; 2026 — Dibuat untuk memudahkan guru membuat aplikasi ujian digital.
+</div>
+
+<script>
+// ============================================================
+// 🔑 SETTING TELEGRAM BOT (EDIT BAGIAN INI)
+// ============================================================
+// Cara mendapatkan Bot Token:
+//   1. Buka Telegram, cari @BotFather
+//   2. Kirim /newbot, ikuti instruksi
+//   3. Salin token yang diberikan (format: 123456:ABC-DEF...)
+//
+// Cara mendapatkan Chat ID:
+//   - Untuk pribadi: cari @userinfobot → kirim /start → salin angka "Id"
+//   - Untuk grup: tambahkan bot ke grup, kirim pesan di grup,
+//     lalu buka https://api.telegram.org/bot<TOKEN>/getUpdates
+//     cari nilai "chat":{"id": ...}
+// ============================================================
+// ✅ GANTI dengan URL Google Apps Script Anda
+const TELEGRAM_RELAY_URL = 'https://script.google.com/macros/s/AKfycbz35pw1q1QowH0VHWRZajvu-nmD2BvJY_TDPcYcUsNJ5GUpUfda0DNUmIQra0m4axSg/exec';     // ← GANTI dengan chat ID Anda
+// ============================================================
+
+let parsedQuestions = [];
+
+// ===================== UPLOAD FILE (DIPERBAIKI) =====================
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+// Klik zona upload → buka file picker
+uploadZone.addEventListener('click', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  fileInput.click();
+});
+
+// Saat file dipilih (dari picker)
+fileInput.addEventListener('change', function(e) {
+  e.preventDefault();
+  if (e.target.files && e.target.files.length > 0) {
+    handleFile(e.target.files[0]);
+  }
+});
+
+// Drag & drop
+uploadZone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  uploadZone.classList.add('dragover');
+});
+
+uploadZone.addEventListener('dragleave', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  uploadZone.classList.remove('dragover');
+});
+
+uploadZone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  uploadZone.classList.remove('dragover');
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    handleFile(e.dataTransfer.files[0]);
+  }
+});
+
+// Cegah browser membuka file saat di-drop di luar zona
+window.addEventListener('dragover', function(e) { e.preventDefault(); });
+window.addEventListener('drop', function(e) { e.preventDefault(); });
+
+function handleFile(file) {
+  const ext = file.name.toLowerCase();
+  if (!ext.endsWith('.xlsx') && !ext.endsWith('.xls')) {
+    showAlert('❌ Format file harus .xlsx atau .xls', 'error');
+    return;
+  }
+
+  showAlert('⏳ Membaca file: ' + file.name + '...', 'success');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+
+      parsedQuestions = [];
+      rows.forEach((row, i) => {
+        // Cari kolom dengan berbagai variasi nama
+        const soal = row['Soal'] || row['soal'] || row['SOAL'] || row['Pertanyaan'] || row['pertanyaan'] || '';
+        const a = row['A'] || row['a'] || row['Pilihan A'] || '';
+        const b = row['B'] || row['b'] || row['Pilihan B'] || '';
+        const c = row['C'] || row['c'] || row['Pilihan C'] || '';
+        const d = row['D'] || row['d'] || row['Pilihan D'] || '';
+        const jawab = (row['Jawaban'] || row['jawaban'] || row['JAWABAN'] || row['Kunci'] || row['kunci'] || '').toString().trim().toUpperCase();
+
+        if (soal && soal.toString().trim() !== '') {
+          parsedQuestions.push({
+            no: parsedQuestions.length + 1,
+            soal: soal.toString().trim(),
+            a: a.toString().trim(),
+            b: b.toString().trim(),
+            c: c.toString().trim(),
+            d: d.toString().trim(),
+            jawaban: jawab
+          });
+        }
+      });
+
+      if (parsedQuestions.length === 0) {
+        showAlert('❌ Tidak ada soal yang terbaca. Periksa format kolom XLSX (Soal, A, B, C, D, Jawaban).', 'error');
+        return;
+      }
+
+      // Tampilkan nama file
+      const fnEl = document.getElementById('fileName');
+      fnEl.textContent = '✅ ' + file.name + ' (' + parsedQuestions.length + ' soal)';
+      fnEl.classList.remove('hidden');
+
+      showPreview();
+      document.getElementById('btnGenerate').disabled = false;
+      showAlert('✅ ' + parsedQuestions.length + ' soal berhasil dimuat dari ' + file.name, 'success');
+
+    } catch (err) {
+      showAlert('❌ Gagal membaca file: ' + err.message, 'error');
+      console.error(err);
+    }
+  };
+  reader.onerror = function() {
+    showAlert('❌ Gagal membaca file dari device.', 'error');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showPreview() {
+  const body = document.getElementById('previewBody');
+  body.innerHTML = '';
+  parsedQuestions.forEach(q => {
+    body.innerHTML += `<tr>
+      <td>${q.no}</td>
+      <td>${escapeHtml(q.soal)}</td>
+      <td>${escapeHtml(q.a)}</td>
+      <td>${escapeHtml(q.b)}</td>
+      <td>${escapeHtml(q.c)}</td>
+      <td>${escapeHtml(q.d)}</td>
+      <td><span class="badge badge-green">${q.jawaban || '-'}</span></td>
+    </tr>`;
+  });
+
+  document.getElementById('statsBox').innerHTML = `
+    <div class="stat-item"><div class="num">${parsedQuestions.length}</div><div class="lbl">Total Soal</div></div>
+    <div class="stat-item"><div class="num">${parsedQuestions.filter(q=>q.jawaban).length}</div><div class="lbl">Ada Kunci</div></div>
+    <div class="stat-item"><div class="num">${parsedQuestions.filter(q=>!q.jawaban).length}</div><div class="lbl">Tanpa Kunci</div></div>
+  `;
+
+  document.getElementById('previewSection').classList.remove('hidden');
+}
+
+// ===================== TELEGRAM NOTIFICATION =====================
+async function sendTelegramNotification(meta) {
+  if (!TELEGRAM_RELAY_URL || TELEGRAM_RELAY_URL.includes('AKfycbz...')) return;
+  
+  try {
+    const res = await fetch(TELEGRAM_RELAY_URL, {
+      method: 'POST',
+      mode: 'no-cors',  // Penting untuk GAS
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        school: meta.school,
+        subject: meta.subject,
+        grade: meta.grade,
+        examTitle: meta.examTitle,
+        totalSoal: meta.totalSoal,
+        numQ: meta.numQ,
+        duration: meta.duration
+      })
+    });
+    // no-cors tidak bisa baca response, tapi request akan terkirim
+  } catch (err) {
+    console.warn('Notification failed:', err);
+  }
+}
+// ===================== GENERATE =====================
+function generateApp() {
+  const subject = document.getElementById('subject').value.trim();
+  const grade = document.getElementById('grade').value.trim();
+
+  if (!subject || !grade) {
+    showAlert('❌ Isi Mata Pelajaran dan Kelas terlebih dahulu!', 'error');
+    return;
+  }
+  if (parsedQuestions.length === 0) {
+    showAlert('❌ Upload file XLSX terlebih dahulu!', 'error');
+    return;
+  }
+
+  const meta = {
+    school: document.getElementById('schoolName').value.trim(),
+    location: document.getElementById('schoolLocation').value.trim(),
+    logo: document.getElementById('schoolLogo').value.trim(),
+    subject: subject,
+    grade: grade,
+    examTitle: document.getElementById('examTitle').value.trim() || 'Tryout',
+    examType: document.getElementById('examType').value,
+    numQuestions: parseInt(document.getElementById('numQuestions').value) || 20,
+    duration: parseInt(document.getElementById('duration').value) || 25,
+    pointsPerQ: parseInt(document.getElementById('pointsPerQ').value) || 5,
+    maxScore: parseInt(document.getElementById('maxScore').value) || 100,
+    description: document.getElementById('description').value.trim(),
+    instructions: document.getElementById('instructions').value.trim()
+  };
+
+  const htmlContent = buildTryoutHTML(meta, parsedQuestions);
+
+  // Download file
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = (meta.examTitle + '_' + meta.subject + '_Kelas_' + meta.grade)
+    .replace(/[^\w\-]+/g, '_').replace(/_+/g, '_');
+  a.href = url;
+  a.download = safeName + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  showAlert('✅ File HTML berhasil di-generate: ' + a.download, 'success');
+
+  // Kirim notifikasi Telegram
+  sendTelegramNotification({
+    school: meta.school,
+    subject: meta.subject,
+    grade: meta.grade,
+    examTitle: meta.examTitle,
+    totalSoal: parsedQuestions.length,
+    numQ: meta.numQuestions,
+    duration: meta.duration
+  });
+}
+
+// ===================== BUILD HTML =====================
+function buildTryoutHTML(meta, questions) {
+  const questionsJSON = JSON.stringify(questions);
+
+  return `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(meta.examTitle)} ${escapeHtml(meta.subject)} - ${escapeHtml(meta.school)}</title>
+<style>
+:root{--primary:#2563eb;--primary-dark:#1d4ed8;--success:#16a34a;--danger:#dc2626;--warning:#f59e0b;--bg:#f0f4f8;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+.header{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);color:#fff;padding:24px 20px;text-align:center}
+.header img{width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:10px;border:3px solid rgba(255,255,255,0.3)}
+.header h1{font-size:1.3rem;margin-bottom:2px}
+.header .sub{opacity:.85;font-size:.85rem}
+.header .badge-row{margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.header .badge{padding:4px 14px;background:rgba(255,255,255,0.15);border-radius:20px;font-size:.78rem;font-weight:600}
+.container{max-width:800px;margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--card);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid var(--border)}
+.card-title{font-size:1.1rem;font-weight:700;margin-bottom:16px;color:var(--primary-dark)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center}
+.info-item{padding:16px;background:#f8fafc;border-radius:10px;border:1px solid var(--border)}
+.info-item .num{font-size:1.8rem;font-weight:800;color:var(--primary)}
+.info-item .lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+label{font-size:.85rem;font-weight:600;color:var(--muted)}
+input{padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:.95rem;font-family:inherit}
+input:focus{outline:none;border-color:var(--primary)}
+.btn{padding:12px 28px;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#15803d}
+.btn-outline{background:transparent;color:var(--primary);border:2px solid var(--primary)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-group{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.instructions{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px;font-size:.85rem;margin-top:12px}
+.timer-bar{background:var(--card);border-radius:var(--radius);padding:14px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid var(--border);position:sticky;top:0;z-index:100}
+.timer{font-size:1.4rem;font-weight:800;font-variant-numeric:tabular-nums}
+.timer.warning{color:var(--warning)}
+.timer.danger{color:var(--danger);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.q-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.q-num{font-weight:800;color:var(--primary);font-size:1rem}
+.q-text{font-size:1rem;margin-bottom:20px;line-height:1.7}
+.options{display:flex;flex-direction:column;gap:10px}
+.opt{padding:14px 18px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:flex-start;gap:12px;font-size:.95rem}
+.opt:hover{border-color:var(--primary);background:#eff6ff}
+.opt.selected{border-color:var(--primary);background:#dbeafe;font-weight:600}
+.opt-letter{width:28px;height:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.opt.selected .opt-letter{background:var(--primary);color:#fff}
+.nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:10px}
+.nav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:8px;margin-top:16px}
+.nav-btn{width:42px;height:42px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-weight:700;font-size:.85rem;transition:all .2s}
+.nav-btn:hover{border-color:var(--primary)}
+.nav-btn.answered{background:var(--primary);color:#fff;border-color:var(--primary)}
+.nav-btn.current{border-color:var(--warning);box-shadow:0 0 0 3px rgba(245,158,11,.3)}
+.nav-btn.doubt{background:#fef3c7;border-color:var(--warning)}
+.legend{display:flex;gap:16px;margin-top:12px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend .dot{width:14px;height:14px;border-radius:4px;border:2px solid var(--border)}
+.legend .dot.ans{background:var(--primary);border-color:var(--primary)}
+.legend .dot.cur{border-color:var(--warning);box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:28px;max-width:420px;width:100%;text-align:center}
+.modal h3{margin-bottom:10px}
+.modal p{color:var(--muted);font-size:.9rem;margin-bottom:20px}
+.result-header{text-align:center;padding:30px 20px}
+.result-score{font-size:4rem;font-weight:900;color:var(--primary)}
+.result-label{color:var(--muted);font-size:.9rem}
+.result-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0}
+.result-stat{padding:14px;background:#f8fafc;border-radius:10px;text-align:center}
+.result-stat .v{font-size:1.3rem;font-weight:800}
+.result-stat .l{font-size:.75rem;color:var(--muted)}
+.review-item{padding:16px;border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+.review-item.correct{border-left:4px solid var(--success)}
+.review-item.wrong{border-left:4px solid var(--danger)}
+.review-q{font-weight:600;margin-bottom:8px}
+.review-ans{font-size:.85rem;color:var(--muted)}
+.review-ans span{font-weight:700}
+.review-ans .correct-ans{color:var(--success)}
+.review-ans .wrong-ans{color:var(--danger)}
+.hidden{display:none!important}
+.footer{text-align:center;padding:20px;color:var(--muted);font-size:.8rem}
+@media print{.timer-bar,.nav-btns,.btn-group,.nav-grid,.legend{display:none!important}.card{break-inside:avoid;box-shadow:none;border:1px solid #ddd}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  ${meta.logo ? '<img src="'+escapeHtml(meta.logo)+'" alt="Logo" onerror="this.style.display=\\'none\\'">' : ''}
+  <h1>${escapeHtml(meta.school)}</h1>
+  <div class="sub">${escapeHtml(meta.location)}</div>
+  <div class="badge-row">
+    <span class="badge">📚 ${escapeHtml(meta.subject)}</span>
+    <span class="badge">🎓 Kelas ${escapeHtml(meta.grade)}</span>
+    <span class="badge">📝 ${escapeHtml(meta.examTitle)}</span>
+    <span class="badge">✅ ${escapeHtml(meta.examType)}</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="landingPage">
+    <div class="card">
+      <div class="card-title">${escapeHtml(meta.examTitle)} - ${escapeHtml(meta.examType)}</div>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px;">${escapeHtml(meta.description)}</p>
+      <div class="info-grid">
+        <div class="info-item"><div class="num">${meta.numQuestions}</div><div class="lbl">Soal ${escapeHtml(meta.examType)}</div></div>
+        <div class="info-item"><div class="num">${meta.duration}</div><div class="lbl">Menit</div></div>
+        <div class="info-item"><div class="num">${meta.maxScore}</div><div class="lbl">Nilai Maksimal</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Mulai Sesi Ujian</div>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px;">Isi data diri kamu, soal akan diacak secara otomatis setiap sesi.</p>
+      <div class="form-group"><label>Nama Lengkap</label><input type="text" id="studentName" placeholder="Ketik nama lengkap"></div>
+      <div class="form-group"><label>Kelas / Nomor Absen</label><input type="text" id="studentClass" placeholder="Contoh: VII-A / 12"></div>
+      <div class="instructions">📌 <strong>Petunjuk:</strong> ${escapeHtml(meta.instructions)}</div>
+      <div class="btn-group"><button class="btn btn-primary" onclick="startExam()">🚀 Mulai Ujian</button></div>
+    </div>
+  </div>
+
+  <div id="examPage" class="hidden">
+    <div class="timer-bar">
+      <div><strong>⏱️ Sisa Waktu</strong></div>
+      <div class="timer" id="timerDisplay">${String(Math.floor(meta.duration/60)).padStart(2,'0')}:${String(meta.duration%60).padStart(2,'0')}</div>
+    </div>
+
+    <div class="card">
+      <div class="q-header">
+        <span class="q-num" id="qNum">Soal 1 dari ${meta.numQuestions}</span>
+        <button class="btn btn-outline" style="padding:6px 14px;font-size:.8rem" onclick="toggleDoubt()" id="btnDoubt">🚩 Ragu-ragu</button>
+      </div>
+      <div class="q-text" id="qText"></div>
+      <div class="options" id="qOptions"></div>
+      <div class="nav-btns">
+        <button class="btn btn-outline" onclick="prevQ()" id="btnPrev">← Sebelumnya</button>
+        <button class="btn btn-primary" onclick="nextQ()" id="btnNext">Berikutnya →</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Navigasi Soal</div>
+      <div class="nav-grid" id="navGrid"></div>
+      <div class="legend">
+        <span><div class="dot ans"></div> Sudah dijawab</span>
+        <span><div class="dot"></div> Belum dijawab</span>
+        <span><div class="dot cur"></div> Soal saat ini</span>
+      </div>
+      <div class="btn-group" style="justify-content:center;margin-top:20px">
+        <button class="btn btn-success" onclick="confirmSubmit()">✅ Selesai & Kumpulkan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultPage" class="hidden">
+    <div class="card">
+      <div class="result-header">
+        <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
+        <div class="result-score" id="finalScore">0</div>
+        <div class="result-label">NILAI AKHIR</div>
+        <p style="margin-top:8px;color:var(--muted)">Ujian selesai, kerja bagus!</p>
+      </div>
+      <div class="result-stats">
+        <div class="result-stat"><div class="v" id="resCorrect" style="color:var(--success)">0</div><div class="l">Benar</div></div>
+        <div class="result-stat"><div class="v" id="resWrong" style="color:var(--danger)">0</div><div class="l">Salah</div></div>
+        <div class="result-stat"><div class="v" id="resTime">00:00</div><div class="l">Durasi</div></div>
+      </div>
+      <p style="text-align:center;color:var(--muted);font-size:.85rem;margin:12px 0" id="resDetail"></p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Pembahasan Soal</div>
+      <div id="reviewList"></div>
+    </div>
+
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak Hasil</button>
+      <button class="btn btn-primary" onclick="location.reload()">🔄 Coba Sesi Baru</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="submitModal">
+  <div class="modal">
+    <h3>Kumpulkan jawaban sekarang?</h3>
+    <p>Periksa kembali jawabanmu sebelum mengumpulkan. Jawaban yang sudah dikumpulkan tidak dapat diubah lagi.</p>
+    <p id="unansweredWarn" style="color:var(--danger);font-weight:600;font-size:.85rem"></p>
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-outline" onclick="closeModal()">Periksa Lagi</button>
+      <button class="btn btn-success" onclick="submitExam()">Ya, Kumpulkan</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">${escapeHtml(meta.school)} · ${escapeHtml(meta.examTitle)} ${escapeHtml(meta.subject)}</div>
+
+<script>
+const ALL_QUESTIONS = ${questionsJSON};
+const NUM_Q = ${meta.numQuestions};
+const DURATION = ${meta.duration};
+const POINTS = ${meta.pointsPerQ};
+const MAX_SCORE = ${meta.maxScore};
+
+let questions = [];
+let answers = {};
+let doubts = new Set();
+let currentQ = 0;
+let timerInterval;
+let timeLeft;
+let startTime;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(t) {
+  if (!t) return '';
+  return t.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function startExam() {
+  const name = document.getElementById('studentName').value.trim();
+  if (!name) { alert('Isi nama lengkap terlebih dahulu!'); return; }
+
+  questions = shuffle(ALL_QUESTIONS).slice(0, NUM_Q);
+  answers = {};
+  doubts = new Set();
+  currentQ = 0;
+  timeLeft = DURATION * 60;
+  startTime = Date.now();
+
+  document.getElementById('landingPage').classList.add('hidden');
+  document.getElementById('examPage').classList.remove('hidden');
+
+  buildNavGrid();
+  renderQuestion();
+  startTimer();
+}
+
+function startTimer() {
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) { clearInterval(timerInterval); submitExam(); }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+  const s = String(timeLeft % 60).padStart(2, '0');
+  const el = document.getElementById('timerDisplay');
+  el.textContent = m + ':' + s;
+  el.className = 'timer' + (timeLeft <= 60 ? ' danger' : timeLeft <= 300 ? ' warning' : '');
+}
+
+function buildNavGrid() {
+  const grid = document.getElementById('navGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < questions.length; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn';
+    btn.textContent = i + 1;
+    btn.onclick = () => goToQ(i);
+    grid.appendChild(btn);
+  }
+}
+
+function updateNavGrid() {
+  const btns = document.getElementById('navGrid').children;
+  for (let i = 0; i < btns.length; i++) {
+    btns[i].className = 'nav-btn';
+    if (answers[i] !== undefined) btns[i].classList.add('answered');
+    if (doubts.has(i)) btns[i].classList.add('doubt');
+    if (i === currentQ) btns[i].classList.add('current');
+  }
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('qNum').textContent = 'Soal ' + (currentQ + 1) + ' dari ' + questions.length;
+  document.getElementById('qText').textContent = q.soal;
+
+  const opts = document.getElementById('qOptions');
+  opts.innerHTML = '';
+  ['a','b','c','d'].forEach((letter) => {
+    if (!q[letter]) return;
+    const div = document.createElement('div');
+    div.className = 'opt' + (answers[currentQ] === letter.toUpperCase() ? ' selected' : '');
+    div.innerHTML = '<div class="opt-letter">' + letter.toUpperCase() + '</div><div>' + escapeHtml(q[letter]) + '</div>';
+    div.onclick = () => selectAnswer(letter.toUpperCase());
+    opts.appendChild(div);
+  });
+
+  document.getElementById('btnPrev').disabled = currentQ === 0;
+  document.getElementById('btnNext').textContent = currentQ === questions.length - 1 ? 'Soal Terakhir' : 'Berikutnya →';
+  document.getElementById('btnDoubt').style.background = doubts.has(currentQ) ? '#fef3c7' : '';
+
+  updateNavGrid();
+}
+
+function selectAnswer(letter) {
+  answers[currentQ] = letter;
+  renderQuestion();
+}
+
+function toggleDoubt() {
+  if (doubts.has(currentQ)) doubts.delete(currentQ); else doubts.add(currentQ);
+  renderQuestion();
+}
+
+function prevQ() { if (currentQ > 0) { currentQ--; renderQuestion(); } }
+function nextQ() { if (currentQ < questions.length - 1) { currentQ++; renderQuestion(); } }
+function goToQ(i) { currentQ = i; renderQuestion(); }
+
+function confirmSubmit() {
+  const unanswered = questions.length - Object.keys(answers).length;
+  document.getElementById('unansweredWarn').textContent = unanswered > 0 ? '⚠️ Masih ada ' + unanswered + ' soal belum dijawab!' : '';
+  document.getElementById('submitModal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('submitModal').classList.remove('show'); }
+
+function submitExam() {
+  clearInterval(timerInterval);
+  closeModal();
+
+  let correct = 0;
+  questions.forEach((q, i) => {
+    if (answers[i] === q.jawaban.toUpperCase()) correct++;
+  });
+
+  const score = Math.min(Math.round((correct / questions.length) * MAX_SCORE), MAX_SCORE);
+  const elapsed = Math.round((Date.now() - startTime) / 1000);
+  const em = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const es = String(elapsed % 60).padStart(2, '0');
+
+  document.getElementById('examPage').classList.add('hidden');
+  document.getElementById('resultPage').classList.remove('hidden');
+
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('resCorrect').textContent = correct;
+  document.getElementById('resWrong').textContent = questions.length - correct;
+  document.getElementById('resTime').textContent = em + ':' + es;
+  document.getElementById('resDetail').textContent = questions.length + ' soal × ' + POINTS + ' poin, dinilai otomatis';
+
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  questions.forEach((q, i) => {
+    const userAns = answers[i] || '-';
+    const isCorrect = userAns === q.jawaban.toUpperCase();
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (isCorrect ? 'correct' : 'wrong');
+    div.innerHTML = '<div class="review-q">' + (i+1) + '. ' + escapeHtml(q.soal) + '</div>' +
+      '<div class="review-ans">Jawaban kamu: <span class="' + (isCorrect?'correct-ans':'wrong-ans') + '">' + userAns + '</span>' +
+      (isCorrect ? '' : ' · Jawaban benar: <span class="correct-ans">' + q.jawaban.toUpperCase() + '</span>') + '</div>';
+    list.appendChild(div);
+  });
+}
+<\\/script>
+</body>
+</html>`;
+}
+
+// ===================== UTILS =====================
+function escapeHtml(t) {
+  if (!t) return '';
+  return t.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function showAlert(msg, type) {
+  const el = document.getElementById('alertBox');
+  el.className = 'alert alert-' + type;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+</script>
+</body>
+</html>    text-align: center;
+  }
+
+  .header h1 { font-size: 1.8rem; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 0.95rem; }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-dark);
+  }
+
+  .card-title .icon {
+    width: 32px; height: 32px;
+    background: #eff6ff;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input, select, textarea {
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    background: #fafbfc;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+  }
+
+  textarea { resize: vertical; min-height: 70px; }
+
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #fafbfc;
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--primary);
+    background: #eff6ff;
+  }
+
+  .upload-zone .icon-upload { font-size: 2.5rem; margin-bottom: 10px; }
+  .upload-zone p { color: var(--muted); font-size: 0.9rem; }
+  .upload-zone .filename {
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: #dcfce7;
+    color: var(--success);
+    border-radius: 20px;
+    display: inline-block;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+  }
+
   .btn-primary {
     background: var(--primary);
     color: white;
