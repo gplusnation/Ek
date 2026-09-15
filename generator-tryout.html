@@ -122,7 +122,8 @@
     background: #fafbfc;
   }
 
-  .upload-zone:hover, .upload-zone.dragover {
+  .upload-zone:focus-within { border-color: var(--primary); background: #eff6ff; }
+.upload-zone:hover, .upload-zone.dragover {
     border-color: var(--primary);
     background: #eff6ff;
   }
@@ -415,14 +416,15 @@
   <div class="card">
     <div class="card-title"><div class="icon">📄</div> Upload Bank Soal (XLSX)</div>
 
-    <div class="upload-zone" id="uploadZone">
+    <label class="upload-zone" id="uploadZone" for="fileInput">
       <div class="icon-upload">📁</div>
-      <p><strong>Klik di sini atau seret file XLSX</strong></p>
+      <p><strong>Klik di sini atau seret file Excel</strong></p>
       <p style="font-size:0.8rem; margin-top:4px;">Format: .xlsx, .xls</p>
       <div id="fileName" class="filename hidden"></div>
-    </div>
-    <!-- Input file dipisah agar tidak bentrok event listener -->
-    <input type="file" id="fileInput" accept=".xlsx,.xls,.XLSX,.XLS" style="display:none">
+      <input type="file" id="fileInput"
+             accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+             style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
+    </label>
 
     <div class="template-info">
       <strong>📋 Format Kolom XLSX (Sheet pertama):</strong><br>
@@ -484,23 +486,17 @@ const TELEGRAM_RELAY_URL = 'https://script.google.com/macros/s/AKfycbz35pw1q1Qow
 
 let parsedQuestions = [];
 
-// ===================== UPLOAD FILE (DIPERBAIKI) =====================
+// ===================== UPLOAD FILE =====================
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
 
-// Klik zona upload → buka file picker
-uploadZone.addEventListener('click', function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  fileInput.click();
-});
-
-// Saat file dipilih (dari picker)
+// Label "for=fileInput" menangani klik file picker.
+// Handler ini hanya memastikan input dapat dipakai kembali setelah file yang sama dipilih.
 fileInput.addEventListener('change', function(e) {
-  e.preventDefault();
-  if (e.target.files && e.target.files.length > 0) {
-    handleFile(e.target.files[0]);
-  }
+  const file = e.target.files && e.target.files[0];
+  if (file) handleFile(file);
+  // Reset value agar memilih file Excel yang sama lagi tetap memicu change.
+  setTimeout(() => { fileInput.value = ''; }, 0);
 });
 
 // Drag & drop
@@ -520,77 +516,155 @@ uploadZone.addEventListener('drop', function(e) {
   e.preventDefault();
   e.stopPropagation();
   uploadZone.classList.remove('dragover');
-  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-    handleFile(e.dataTransfer.files[0]);
-  }
+
+  const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file) handleFile(file);
 });
 
 // Cegah browser membuka file saat di-drop di luar zona
 window.addEventListener('dragover', function(e) { e.preventDefault(); });
 window.addEventListener('drop', function(e) { e.preventDefault(); });
 
+function normalizeHeader(value) {
+  return String(value ?? '')
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[_-]+/g, ' ');
+}
+
+function getColumn(row, aliases) {
+  const keys = Object.keys(row);
+  const normalized = {};
+  keys.forEach(key => {
+    normalized[normalizeHeader(key)] = row[key];
+  });
+
+  for (const alias of aliases) {
+    const key = normalizeHeader(alias);
+    if (Object.prototype.hasOwnProperty.call(normalized, key)) {
+      return normalized[key];
+    }
+  }
+  return '';
+}
+
 function handleFile(file) {
-  const ext = file.name.toLowerCase();
-  if (!ext.endsWith('.xlsx') && !ext.endsWith('.xls')) {
-    showAlert('❌ Format file harus .xlsx atau .xls', 'error');
+  if (!file) return;
+
+  const fileName = String(file.name || '');
+  const ext = fileName.split('.').pop().toLowerCase();
+
+  if (!['xlsx', 'xls'].includes(ext)) {
+    showAlert('❌ File harus berformat Excel .xlsx atau .xls', 'error');
     return;
   }
 
-  showAlert('⏳ Membaca file: ' + file.name + '...', 'success');
+  if (typeof XLSX === 'undefined') {
+    showAlert('❌ Library Excel belum berhasil dimuat. Periksa koneksi internet lalu refresh halaman.', 'error');
+    console.error('XLSX library tidak tersedia.');
+    return;
+  }
+
+  if (file.size === 0) {
+    showAlert('❌ File Excel kosong / berukuran 0 byte.', 'error');
+    return;
+  }
+
+  showAlert('⏳ Membaca file: ' + fileName + '...', 'success');
 
   const reader = new FileReader();
+
   reader.onload = function(e) {
     try {
+      if (!e.target.result) throw new Error('Data file kosong.');
+
       const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: 'array' });
+      const wb = XLSX.read(data, {
+        type: 'array',
+        cellDates: false,
+        raw: false
+      });
+
+      if (!wb.SheetNames || wb.SheetNames.length === 0) {
+        throw new Error('Workbook tidak memiliki sheet.');
+      }
+
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+      if (!ws) throw new Error('Sheet pertama tidak dapat dibaca.');
+
+      const rows = XLSX.utils.sheet_to_json(ws, {
+        defval: '',
+        raw: false,
+        blankrows: false
+      });
 
       parsedQuestions = [];
-      rows.forEach((row, i) => {
-        // Cari kolom dengan berbagai variasi nama
-        const soal = row['Soal'] || row['soal'] || row['SOAL'] || row['Pertanyaan'] || row['pertanyaan'] || '';
-        const a = row['A'] || row['a'] || row['Pilihan A'] || '';
-        const b = row['B'] || row['b'] || row['Pilihan B'] || '';
-        const c = row['C'] || row['c'] || row['Pilihan C'] || '';
-        const d = row['D'] || row['d'] || row['Pilihan D'] || '';
-        const jawab = (row['Jawaban'] || row['jawaban'] || row['JAWABAN'] || row['Kunci'] || row['kunci'] || '').toString().trim().toUpperCase();
 
-        if (soal && soal.toString().trim() !== '') {
+      rows.forEach((row) => {
+        // Mendukung header dengan perbedaan huruf besar/kecil,
+        // spasi, BOM, underscore, tanda hubung, dan beberapa nama alternatif.
+        const soal = getColumn(row, [
+          'Soal', 'Pertanyaan', 'Question', 'Questions'
+        ]);
+        const a = getColumn(row, [
+          'A', 'Pilihan A', 'Option A', 'Opsi A'
+        ]);
+        const b = getColumn(row, [
+          'B', 'Pilihan B', 'Option B', 'Opsi B'
+        ]);
+        const c = getColumn(row, [
+          'C', 'Pilihan C', 'Option C', 'Opsi C'
+        ]);
+        const d = getColumn(row, [
+          'D', 'Pilihan D', 'Option D', 'Opsi D'
+        ]);
+        const jawab = String(getColumn(row, [
+          'Jawaban', 'Kunci', 'Answer', 'Key'
+        ]) ?? '').trim().toUpperCase();
+
+        if (String(soal ?? '').trim() !== '') {
           parsedQuestions.push({
             no: parsedQuestions.length + 1,
-            soal: soal.toString().trim(),
-            a: a.toString().trim(),
-            b: b.toString().trim(),
-            c: c.toString().trim(),
-            d: d.toString().trim(),
+            soal: String(soal).trim(),
+            a: String(a ?? '').trim(),
+            b: String(b ?? '').trim(),
+            c: String(c ?? '').trim(),
+            d: String(d ?? '').trim(),
             jawaban: jawab
           });
         }
       });
 
       if (parsedQuestions.length === 0) {
-        showAlert('❌ Tidak ada soal yang terbaca. Periksa format kolom XLSX (Soal, A, B, C, D, Jawaban).', 'error');
-        return;
+        const headers = rows.length ? Object.keys(rows[0]).join(', ') : '(tidak ada header)';
+        throw new Error(
+          'Tidak ada soal yang terbaca. Header yang ditemukan: ' + headers +
+          '. Gunakan kolom Soal, A, B, C, D, Jawaban.'
+        );
       }
 
-      // Tampilkan nama file
       const fnEl = document.getElementById('fileName');
-      fnEl.textContent = '✅ ' + file.name + ' (' + parsedQuestions.length + ' soal)';
+      fnEl.textContent = '✅ ' + fileName + ' (' + parsedQuestions.length + ' soal)';
       fnEl.classList.remove('hidden');
 
       showPreview();
       document.getElementById('btnGenerate').disabled = false;
-      showAlert('✅ ' + parsedQuestions.length + ' soal berhasil dimuat dari ' + file.name, 'success');
+      showAlert('✅ ' + parsedQuestions.length + ' soal berhasil dimuat dari ' + fileName, 'success');
 
     } catch (err) {
-      showAlert('❌ Gagal membaca file: ' + err.message, 'error');
-      console.error(err);
+      parsedQuestions = [];
+      document.getElementById('btnGenerate').disabled = true;
+      console.error('Excel parse error:', err);
+      showAlert('❌ Gagal membaca Excel: ' + (err.message || err), 'error');
     }
   };
+
   reader.onerror = function() {
-    showAlert('❌ Gagal membaca file dari device.', 'error');
+    showAlert('❌ Gagal membaca file dari device/browser.', 'error');
   };
+
   reader.readAsArrayBuffer(file);
 }
 
