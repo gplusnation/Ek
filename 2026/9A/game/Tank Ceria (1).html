@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Tank Ceria</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#8fd3ff;--ink:#2b2d42}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{height:100%;margin:0;background:#8fd3ff;font-family:"Trebuchet MS","Comic Sans MS",system-ui,sans-serif;color:var(--ink);overflow:hidden;touch-action:none}
+#app{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto}
+#hud{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px;background:#fff;border-bottom:4px solid #ffd23f;font-weight:800;font-size:16px}
+#hud span{background:#fff4c2;border-radius:14px;padding:4px 10px;white-space:nowrap}
+#bp{border:0;background:#ff7eb6;color:#fff;font-size:18px;border-radius:14px;padding:4px 12px;font-weight:800}
+#stage{flex:1;position:relative;min-height:0;background:#8fd3ff}
+canvas{width:100%;height:100%;object-fit:contain;display:block}
+#ov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(40,60,120,.55);padding:12px;overflow:auto}
+.card{background:#fff;border-radius:24px;padding:18px;text-align:center;width:100%;max-width:340px;box-shadow:0 8px 0 #ffd23f;border:4px solid #ff7eb6}
+.card h1{margin:0 0 6px;font-size:28px;color:#ff5d8f}
+.card h2{margin:0 0 8px;font-size:22px}
+.card p{margin:6px 0;font-size:16px}
+.big{font-size:30px;font-weight:900;margin:8px 0;color:#3a86ff}
+.btn{display:block;width:100%;margin:8px 0 0;padding:12px;border:0;border-radius:16px;font-size:18px;font-weight:800;color:#fff;background:#3ac569;box-shadow:0 4px 0 #26964d;font-family:inherit}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0}
+.btn.y{background:#ffa62b;box-shadow:0 4px 0 #c97a0a}
+.btn.r{background:#ff5d5d;box-shadow:0 4px 0 #c13b3b}
+.btn.b{background:#3a86ff;box-shadow:0 4px 0 #2260c9}
+.btn:disabled{background:#b8b8b8;box-shadow:0 4px 0 #8a8a8a}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.opts .btn{margin:0;font-size:20px}
+.btn.ok{background:#3ac569!important}.btn.no{background:#ff5d5d!important}
+.exp{background:#fff4c2;border-radius:14px;padding:8px;font-size:15px;text-align:left}
+#ctl{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 12px;background:#fff;border-top:4px solid #ffd23f}
+#pad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,54px);gap:4px}
+#pad button,#fire{border:0;color:#fff;font-weight:900;touch-action:none}
+#pad button{border-radius:16px;background:#3a86ff;font-size:24px;box-shadow:0 4px 0 #2260c9}
+#pad button.on,#fire.on{filter:brightness(1.2);transform:translateY(3px)}
+#fire{width:92px;height:92px;border-radius:50%;background:#ff5d5d;font-size:34px;box-shadow:0 6px 0 #c13b3b}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <span>⭐ <b id="sc">0</b></span>
+    <span id="lf">❤️❤️❤️</span>
+    <span>Level <b id="lv">1</b></span>
+    <button id="bp" aria-label="Jeda">⏸</button>
+  </div>
+  <div id="stage">
+    <canvas id="c" width="360" height="420"></canvas>
+    <div id="ov"></div>
+  </div>
+  <div id="ctl">
+    <div id="pad">
+      <span></span><button data-k="u">▲</button><span></span>
+      <button data-k="l">◀</button><span></span><button data-k="r">▶</button>
+      <span></span><button data-k="d">▼</button><span></span>
+    </div>
+    <button id="fire" data-k="f">💥</button>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id),cv=$('c'),g=cv.getContext('2d'),W=360,H=420;
+const ov=$('ov');
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const D={u:[0,-1,0],r:[1,0,90],d:[0,1,180],l:[-1,0,270]};
+let st='menu',score,lives,lv,P,bul,en,fx,toSpawn,left,spawnT,banner,canRevive,pausedFrom;
+const inp={u:0,d:0,l:0,r:0,f:0};
+
+/* ---------- Suara ---------- */
+let ac;
+function audio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){}}
+function tone(f,d,type='square',vol=.12,to=0,delay=0){if(!ac)return;const t=ac.currentTime+delay,o=ac.createOscillator(),v=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);v.gain.setValueAtTime(vol,t);v.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(v);v.connect(ac.destination);o.start(t);o.stop(t+d)}
+const sfx={shoot:()=>tone(700,.1,'square',.08,200),hit:()=>tone(220,.35,'sawtooth',.15,50),boom:()=>tone(140,.25,'sawtooth',.12,40),
+ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.18,'triangle',.15,0,i*.1)),bad:()=>{tone(220,.25,'triangle',.18,150);tone(150,.4,'triangle',.18,90,.2)}};
+
+/* ---------- Permainan ---------- */
+function startGame(){audio();score=0;lives=3;lv=1;canRevive=true;bul=[];en=[];fx=[];P={x:W/2,y:H-40,dir:'u',cd:0,inv:0};newLevel();st='play';hide();hud()}
+function newLevel(){toSpawn=3+lv*2;left=toSpawn;spawnT=1;bul=[];en=[];banner={t:2,text:'Level '+lv+'!'}}
+function hud(){$('sc').textContent=score;$('lv').textContent=lv;$('lf').textContent=lives>0?'❤️'.repeat(lives):'💔'}
+function spawn(){const x=R(30,W-30);if(Math.hypot(x-P.x,24-P.y)<100){spawnT=.3;return}
+ en.push({x,y:24,dir:'d',t:R(8,20)/10,f:R(10,30)/10,col:['#ff6b6b','#b575ff','#ff9f1c'][R(0,2)]});spawnT=1.4}
+function shoot(o,spd,own){const d=D[o.dir];bul.push({x:o.x+d[0]*20,y:o.y+d[1]*20,vx:d[0]*spd,vy:d[1]*spd,own})}
+function boom(x,y,c){for(let i=0;i<14;i++){const a=Math.random()*6.28,s=R(40,130);fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:.5,c})}}
+function update(dt){
+ // pemain
+ let dx=(inp.r?1:0)-(inp.l?1:0),dy=(inp.d?1:0)-(inp.u?1:0);
+ if(dx&&dy)dy=0;
+ if(dx||dy){P.dir=dx?(dx>0?'r':'l'):(dy>0?'d':'u');P.x=Math.max(18,Math.min(W-18,P.x+dx*125*dt));P.y=Math.max(18,Math.min(H-18,P.y+dy*125*dt))}
+ P.cd-=dt;P.inv-=dt;
+ if(inp.f&&P.cd<=0){shoot(P,280,'p');P.cd=.35;sfx.shoot()}
+ // musuh
+ spawnT-=dt;
+ if(toSpawn>0&&en.length<Math.min(2+lv,6)&&spawnT<=0){spawn();if(spawnT>0.5)toSpawn--}
+ const sp=40+lv*10;
+ for(const e of en){
+  const d=D[e.dir];e.x+=d[0]*sp*dt;e.y+=d[1]*sp*dt;e.t-=dt;e.f-=dt;
+  let wall=false;
+  if(e.x<18){e.x=18;wall=true}if(e.x>W-18){e.x=W-18;wall=true}if(e.y<18){e.y=18;wall=true}if(e.y>H-18){e.y=H-18;wall=true}
+  if(wall||e.t<=0){e.t=R(8,22)/10;
+   if(Math.random()<.5){const ax=P.x-e.x,ay=P.y-e.y;e.dir=Math.abs(ax)>Math.abs(ay)?(ax>0?'r':'l'):(ay>0?'d':'u')}
+   else e.dir='udlr'[R(0,3)]}
+  if(e.f<=0){e.f=Math.max(1.2,3.2-lv*.2)+Math.random();shoot(e,130+lv*10,'e')}
+ }
+ // peluru
+ for(const b of bul){b.x+=b.vx*dt;b.y+=b.vy*dt;
+  if(b.x<-10||b.x>W+10||b.y<-10||b.y>H+10){b.dead=1;continue}
+  if(b.own==='p'){for(const e of en){if(!e.dead&&Math.abs(b.x-e.x)<17&&Math.abs(b.y-e.y)<17){e.dead=1;b.dead=1;score+=10;left--;boom(e.x,e.y,e.col);sfx.boom();hud();break}}}
+  else if(P.inv<=0&&Math.abs(b.x-P.x)<15&&Math.abs(b.y-P.y)<15){b.dead=1;hitPlayer()}
+ }
+ bul=bul.filter(b=>!b.dead);en=en.filter(e=>!e.dead);
+ for(const p of fx){p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt}fx=fx.filter(p=>p.t>0);
+ if(banner){banner.t-=dt;if(banner.t<=0)banner=null}
+ if(st==='play'&&left<=0&&!en.length&&toSpawn<=0){lv++;newLevel();hud()}
+}
+function hitPlayer(){lives--;P.inv=1.5;boom(P.x,P.y,'#3ac569');sfx.hit();hud();if(navigator.vibrate)navigator.vibrate(120);
+ if(lives<=0){st='over';setTimeout(showOver,500)}}
+
+/* ---------- Gambar ---------- */
+function tank(x,y,dir,body,dark,face){g.save();g.translate(x,y);g.rotate(D[dir][2]*Math.PI/180);
+ g.fillStyle=dark;g.beginPath();g.roundRect(-17,-15,7,30,3);g.roundRect(10,-15,7,30,3);g.fill();
+ g.fillStyle=body;g.beginPath();g.roundRect(-12,-14,24,28,7);g.fill();
+ g.fillStyle=dark;g.fillRect(-3.5,-24,7,16);
+ g.fillStyle=body;g.strokeStyle=dark;g.lineWidth=2;g.beginPath();g.arc(0,0,8,0,6.28);g.fill();g.stroke();
+ if(face){g.fillStyle='#fff';g.beginPath();g.arc(-3,-1,2.5,0,6.28);g.arc(3,-1,2.5,0,6.28);g.fill();g.fillStyle='#222';g.beginPath();g.arc(-3,-1,1.2,0,6.28);g.arc(3,-1,1.2,0,6.28);g.fill()}
+ g.restore()}
+const flowers=Array.from({length:18},()=>({x:R(10,W-10),y:R(10,H-10),c:['#fff','#ffd6e8','#fff3a0'][R(0,2)]}));
+function draw(){
+ for(let i=0;i<W/40;i++)for(let j=0;j<=H/40;j++){g.fillStyle=(i+j)%2?'#a8e063':'#9bd955';g.fillRect(i*40,j*40,40,40)}
+ for(const f of flowers){g.fillStyle=f.c;g.beginPath();g.arc(f.x,f.y,3,0,6.28);g.fill();g.fillStyle='#ffb703';g.beginPath();g.arc(f.x,f.y,1.3,0,6.28);g.fill()}
+ for(const e of en)tank(e.x,e.y,e.dir,e.col,'#4a2c6b',true);
+ if(P&&!(P.inv>0&&Math.floor(P.inv*10)%2))if(lives>0)tank(P.x,P.y,P.dir,'#3a86ff','#1d3f8f',false);
+ for(const b of bul){g.fillStyle=b.own==='p'?'#ffe14d':'#ff7eb6';g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.arc(b.x,b.y,5,0,6.28);g.fill();g.stroke()}
+ for(const p of fx){g.globalAlpha=Math.max(0,p.t*2);g.fillStyle=p.c;g.beginPath();g.arc(p.x,p.y,4,0,6.28);g.fill()}g.globalAlpha=1;
+ if(banner){g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.roundRect(W/2-90,H/2-30,180,60,20);g.fill();g.fillStyle='#ff5d8f';g.font='900 30px "Trebuchet MS",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(banner.text,W/2,H/2)}
+}
+let last=0;
+function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;
+ if(st==='play'||st==='over'&&P)if(st==='play')update(dt);else{for(const p of fx){p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt}fx=fx.filter(p=>p.t>0)}
+ draw();requestAnimationFrame(loop)}
+
+/* ---------- Layar & Kuis ---------- */
+function show(h){ov.innerHTML='<div class="card">'+h+'</div>';ov.style.display='flex'}
+function hide(){ov.style.display='none'}
+function showMenu(){st='menu';P=null;bul=[];en=[];fx=[];show('<h1>🛡️ Tank Ceria</h1><p>Hancurkan tank musuh dan jawab soal matematika untuk dapat nyawa baru!</p><p>🕹️ Gerak &nbsp; 💥 Tembak</p><button class="btn" onclick="startGame()">▶ Mulai Main</button>')}
+function showOver(){
+ let h='<h1>😵 Game Over</h1><p>Skor kamu</p><div class="big">⭐ '+score+'</div><p>Level '+lv+'</p>';
+ if(canRevive)h+='<button class="btn y" onclick="quiz()">❤️ Dapatkan 1 Nyawa Tambahan</button>';
+ h+='<button class="btn" onclick="startGame()">🔄 Main Lagi</button><button class="btn r" onclick="exitGame()">🚪 Keluar</button>';show(h)}
+function exitGame(){st='menu';P=null;show('<h1>👋 Sampai Jumpa!</h1><p>Terima kasih sudah bermain.</p><div class="big">⭐ '+(score||0)+'</div><button class="btn" onclick="showMenu()">🏠 Ke Menu Utama</button>')}
+function makeQ(){const t=R(0,3);let q,a,e;
+ if(t===0){const x=R(10,60),y=R(11,Math.min(39,99-x)),tn=y-y%10,u=y%10;a=x+y;q=x+' + '+y;e=x+' + '+tn+' = '+(x+tn)+(u?', lalu + '+u+' = '+a:'')+'.'}
+ else if(t===1){const x=R(30,99),y=R(11,x-5),tn=y-y%10,u=y%10;a=x-y;q=x+' − '+y;e=x+' − '+tn+' = '+(x-tn)+(u?', lalu − '+u+' = '+a:'')+'.'}
+ else if(t===2){const x=R(2,5),y=R(2,10);a=x*y;q=x+' × '+y;e=x+' × '+y+' artinya '+Array(y).fill(x).join(' + ')+' = '+a+'.'}
+ else{const y=R(2,5),k=R(2,10),x=y*k;a=k;q=x+' ÷ '+y;e='Berapa kali '+y+' masuk ke '+x+'? Karena '+y+' × '+k+' = '+x+', jawabannya '+k+'.'}
+ const s=new Set([a]);const c=[1,2,3,10,-1,-2,-3,-10,5,-5].sort(()=>Math.random()-.5);
+ for(const d of c){if(s.size>=4)break;if(a+d>0)s.add(a+d)}
+ return{q,a,e,o:[...s].sort(()=>Math.random()-.5)}}
+let cur,tm;
+function quiz(){cur=makeQ();const L='ABCD';
+ show('<h2>🧮 Jawab dulu ya!</h2><div class="big">'+cur.q+' = ?</div><div class="opts">'+cur.o.map((v,i)=>'<button class="btn b" data-v="'+v+'" onclick="answer('+v+')">'+L[i]+'. '+v+'</button>').join('')+'</div><button class="btn r" onclick="showEnd()">Batal</button>')}
+function showEnd(){canRevive=true;showOver()}
+function answer(v){
+ if(v===cur.a){sfx.ok();lives=1;P.inv=2;st='play';banner={t:1.5,text:'Hebat! +1 ❤️'};hud();hide();return}
+ sfx.bad();clearInterval(tm);let s=5;
+ show('<h2>😅 Belum tepat</h2><div class="big">'+cur.q+' = '+cur.a+'</div><div class="exp">💡 '+cur.e+'</div><button class="btn y" id="nx" disabled>Soal Lain ('+s+')</button><button class="btn r" onclick="clearInterval(tm);canRevive=false;showOver()">Akhiri Permainan</button>');
+ const nx=$('nx');nx.onclick=quiz;
+ tm=setInterval(()=>{s--;if(s<=0){clearInterval(tm);nx.disabled=false;nx.textContent='Soal Lain 🔁'}else nx.textContent='Soal Lain ('+s+')'},1000)}
+function pause(){if(st==='play'){st='pause';show('<h2>⏸ Jeda</h2><button class="btn" onclick="resume()">▶ Lanjut</button><button class="btn y" onclick="startGame()">🔄 Main Lagi</button><button class="btn r" onclick="exitGame()">🚪 Keluar</button>')}else if(st==='pause')resume()}
+function resume(){st='play';hide()}
+$('bp').onclick=pause;
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
+
+/* ---------- Kontrol ---------- */
+document.querySelectorAll('[data-k]').forEach(b=>{const k=b.dataset.k;
+ const on=e=>{e.preventDefault();audio();inp[k]=1;b.classList.add('on')},off=e=>{inp[k]=0;b.classList.remove('on')};
+ b.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(n=>b.addEventListener(n,off))});
+const km={ArrowUp:'u',w:'u',ArrowDown:'d',s:'d',ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r',' ':'f'};
+addEventListener('keydown',e=>{const k=km[e.key];if(k){e.preventDefault();inp[k]=1}if(e.key==='p')pause()});
+addEventListener('keyup',e=>{const k=km[e.key];if(k)inp[k]=0});
+addEventListener('contextmenu',e=>e.preventDefault());
+showMenu();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

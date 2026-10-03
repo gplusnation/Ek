@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ular Edukasi SD</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,sans-serif;background:#f4f8ff;color:#17324d;text-align:center}
+  .wrap{max-width:700px;margin:auto;padding:14px}
+  h1{margin:8px 0;color:#1769aa}
+  .info{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px}
+  .badge{background:white;border-radius:12px;padding:8px 12px;box-shadow:0 2px 7px #0002}
+  canvas{background:#dff5d8;border:4px solid #1769aa;border-radius:14px;width:min(92vw,560px);height:min(92vw,560px);touch-action:none}
+  button{border:0;border-radius:12px;padding:11px 16px;background:#1769aa;color:white;font-weight:bold;margin:4px;cursor:pointer}
+  button:hover{opacity:.9}
+  .controls{max-width:260px;margin:10px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+  .controls button{font-size:20px;padding:10px}
+  .empty{visibility:hidden}
+  #questionBox{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:20px}
+  .card{background:white;border-radius:20px;padding:22px;max-width:480px;width:100%;box-shadow:0 8px 30px #0005}
+  .subject{font-size:14px;color:#1769aa;font-weight:bold}
+  #question{font-size:22px;font-weight:bold;margin:15px 0}
+  .answers{display:grid;gap:9px}
+  .answers button{background:#e9f3ff;color:#17324d;border:2px solid #b9d8f4}
+  #message{min-height:28px;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🐍 Ular Edukasi SD</h1>
+  <div class="info">
+    <div class="badge">⭐ Skor: <span id="score">0</span></div>
+    <div class="badge">❤️ Nyawa: <span id="lives">3</span></div>
+    <div class="badge">📚 Soal: <span id="count">0</span></div>
+  </div>
+  <canvas id="game" width="560" height="560"></canvas>
+  <p id="message">Gunakan tombol panah atau tombol di bawah untuk bergerak.</p>
+  <button onclick="startGame()">▶ Mulai / Ulangi</button>
+  <div class="controls">
+    <button class="empty">•</button><button onclick="changeDir(0,-1)">⬆️</button><button class="empty">•</button>
+    <button onclick="changeDir(-1,0)">⬅️</button><button onclick="changeDir(0,1)">⬇️</button><button onclick="changeDir(1,0)">➡️</button>
+  </div>
+  <small>Materi: Matematika • Bahasa Indonesia • IPA • IPS • Bahasa Inggris</small>
+</div>
+
+<div id="questionBox">
+  <div class="card">
+    <div class="subject" id="subject"></div>
+    <div id="question"></div>
+    <div class="answers" id="answers"></div>
+  </div>
+</div>
+
+<script>
+const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
+const N=14, cell=40;
+let snake, food, dir, nextDir, score, lives, count, running=false, paused=false, timer;
+const questions=[
+ {s:"Matematika",q:"Berapakah 5 + 3?",a:["6","7","8","9"],c:2},
+ {s:"Matematika",q:"Berapakah 10 - 4?",a:["5","6","7","8"],c:1},
+ {s:"Matematika",q:"Ada 2 apel lalu mendapat 3 apel. Jumlahnya?",a:["4","5","6","7"],c:1},
+ {s:"Matematika",q:"Angka setelah 19 adalah ...",a:["18","20","21","29"],c:1},
+ {s:"Bahasa Indonesia",q:"Lawan kata 'besar' adalah ...",a:["tinggi","kecil","panjang","lebar"],c:1},
+ {s:"Bahasa Indonesia",q:"Kata yang tepat: 'Ibu sedang ... nasi.'",a:["memasak","berlari","tidur","mandi"],c:0},
+ {s:"Bahasa Indonesia",q:"Hewan yang berbunyi 'meong' adalah ...",a:["Ayam","Kucing","Sapi","Ikan"],c:1},
+ {s:"IPA",q:"Bagian tubuh untuk melihat adalah ...",a:["telinga","hidung","mata","kaki"],c:2},
+ {s:"IPA",q:"Tumbuhan membutuhkan ... untuk tumbuh.",a:["batu","air","plastik","sepatu"],c:1},
+ {s:"IPA",q:"Kita bernapas menggunakan ...",a:["paru-paru","tangan","mata","gigi"],c:0},
+ {s:"IPS",q:"Tempat kita belajar disebut ...",a:["pasar","sekolah","rumah sakit","stasiun"],c:1},
+ {s:"IPS",q:"Orang yang mengajar di sekolah adalah ...",a:["dokter","petani","guru","nelayan"],c:2},
+ {s:"IPS",q:"Tempat untuk membeli sayur dan buah adalah ...",a:["pasar","bandara","sekolah","perpustakaan"],c:0},
+ {s:"Bahasa Inggris",q:"'Apel' dalam bahasa Inggris adalah ...",a:["Apple","Book","Cat","Milk"],c:0},
+ {s:"Bahasa Inggris",q:"Arti kata 'book' adalah ...",a:["meja","buku","rumah","bola"],c:1},
+ {s:"Bahasa Inggris",q:"'Good morning' berarti ...",a:["Selamat malam","Selamat pagi","Terima kasih","Sampai jumpa"],c:1}
+];
+
+function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.fillStyle="#dff5d8";ctx.fillRect(0,0,canvas.width,canvas.height);
+ for(let i=0;i<N;i++)for(let j=0;j<N;j++){ctx.strokeStyle="#c6e5bd";ctx.strokeRect(i*cell,j*cell,cell,cell)}
+ if(food){ctx.font="28px Arial";ctx.fillText("🍎",food.x*cell+5,food.y*cell+31)}
+ snake.forEach((p,i)=>{ctx.fillStyle=i===0?"#1769aa":"#38a169";ctx.beginPath();ctx.roundRect(p.x*cell+3,p.y*cell+3,cell-6,cell-6,9);ctx.fill(); if(i===0){ctx.font="22px Arial";ctx.fillText("🙂",p.x*cell+8,p.y*cell+29)}})
+}
+function randomFood(){
+ let p; do{p={x:Math.floor(Math.random()*N),y:Math.floor(Math.random()*N)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));
+ food=p;
+}
+function startGame(){
+ clearInterval(timer);snake=[{x:7,y:7},{x:6,y:7},{x:5,y:7}];dir={x:1,y:0};nextDir=dir;
+ score=0;lives=3;count=0;running=true;paused=false;updateInfo();randomFood();draw();
+ document.getElementById("message").textContent="Ayo cari apel! Jawab soal untuk mendapat poin.";
+ timer=setInterval(tick,170);
+}
+function changeDir(x,y){
+ if(!running)return;
+ if(x===-dir.x&&y===-dir.y)return;
+ nextDir={x,y};
+}
+function tick(){
+ if(!running||paused)return;
+ dir=nextDir;
+ let head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+ if(head.x<0||head.y<0||head.x>=N||head.y>=N||snake.some(p=>p.x===head.x&&p.y===head.y)){loseLife();return}
+ snake.unshift(head);
+ if(head.x===food.x&&head.y===food.y){paused=true;showQuestion();}else snake.pop();
+ draw();
+}
+function loseLife(){
+ lives--;updateInfo();
+ document.getElementById("message").textContent="Oops! Ular menabrak. Nyawa berkurang.";
+ if(lives<=0){running=false;clearInterval(timer);document.getElementById("message").textContent="🎉 Permainan selesai! Skor: "+score+" — tekan Mulai / Ulangi untuk bermain lagi."}
+ else {snake=[{x:7,y:7},{x:6,y:7},{x:5,y:7}];dir={x:1,y:0};nextDir=dir;randomFood();draw();}
+}
+function showQuestion(){
+ count++;updateInfo();
+ const q=questions[Math.floor(Math.random()*questions.length)];
+ document.getElementById("subject").textContent="📚 "+q.s;
+ document.getElementById("question").textContent=q.q;
+ const box=document.getElementById("answers");box.innerHTML="";
+ q.a.forEach((ans,i)=>{let b=document.createElement("button");b.textContent=ans;b.onclick=()=>answer(i===q.c);box.appendChild(b)});
+ document.getElementById("questionBox").style.display="flex";
+}
+function answer(correct){
+ document.getElementById("questionBox").style.display="none";
+ if(correct){score+=10;document.getElementById("message").textContent="✅ Benar! +10 poin. Lanjutkan!";snake.push({...snake[snake.length-1]});}
+ else {lives--;document.getElementById("message").textContent="❌ Belum tepat. Coba soal berikutnya!";}
+ updateInfo();paused=false;randomFood();draw();
+ if(lives<=0){running=false;clearInterval(timer);document.getElementById("message").textContent="Permainan selesai! Skor: "+score+" — tekan Mulai / Ulangi."}
+}
+function updateInfo(){document.getElementById("score").textContent=score;document.getElementById("lives").textContent=lives;document.getElementById("count").textContent=count}
+document.addEventListener("keydown",e=>{
+ const k=e.key;
+ if(k==="ArrowUp")changeDir(0,-1);
+ if(k==="ArrowDown")changeDir(0,1);
+ if(k==="ArrowLeft")changeDir(-1,0);
+ if(k==="ArrowRight")changeDir(1,0);
+});
+draw();
+</script>
+</body>
+</html>
